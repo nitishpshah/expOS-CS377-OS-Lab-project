@@ -1,1 +1,1 @@
-git add *.spl *.xsm *.expl *.sh *.batch
+git add -f *.spl *.xsm *.expl *.sh *.batch

@@ -1,0 +1,39 @@
+// 1. Change the state of the invoking process to TERMINATED.
+
+alias currentPID R0;
+currentPID = [SYSTEM_STATUS_TABLE+1];
+
+alias process_table_entry R1;
+process_table_entry = PROCESS_TABLE + currentPID * 16;
+
+[process_table_entry + 4] = TERMINATED;
+
+alias process_i R3;
+alias count R5;
+R4 = 0;
+count = 0;
+process_i = 0;
+while (1==1) do
+	count = count + 1;
+	process_i = process_i + 1;
+	if ( ([PROCESS_TABLE + 16*process_i + 4] != TERMINATED))  then
+
+		call SCHEDULER;		
+
+		// VERIFY  NOT NECESSARY? WHY?
+		// restore;
+		// SP = [new_process_table + 13];
+		// SP = [PROCESS_TABLE + ( [SYSTEM_STATUS_TABLE + 1] * 16) + 13];
+		//ireturn;
+
+		R4 = 1;
+		break;
+	endif;
+	if (count >= MAX_PROC_NUM) then
+		break;
+	endif;
+endwhile;
+
+if (R4 == 0) then 
+	halt;
+endif;

@@ -1,0 +1,69 @@
+alias functionNum R1;
+alias currentPID R2;
+
+// 2. In Module 0, for the Acquire Terminal function (functionNum = 8) implement thefollowing steps. 
+if(functionNum == 8) then
+
+	// 		i. The current process should wait in a loop until the terminal is free.
+	//		Repeat the following steps if STATUS field in the Terminal Status table is 1(terminal isallocated to other process).
+
+	while([TERMINAL_STATUS_TABLE] == 1) do
+
+		//	- Change the state of the current process in its process table entry to WAIT_TERMINAL. 
+		[PROCESS_TABLE + 16*currentPID + 4] = WAIT_TERMINAL;
+
+		//	- Push the registers used till now using the multipush statement. 
+		multipush(R0, R1, R2, R3, R4, R5); 
+
+		//	- Call the scheduler to schedule other process as this process is waiting forterminal. 
+		call SCHEDULER;
+
+		//	- Pop the registers pushed before.  (Note that this code will be executed only afterthe scheduler schedules 
+		//	the process again, which in turn occurs only after theterminal was released by the holding process by 
+		//	invoking the release terminalfunction. )
+		multipop(R0, R1, R2, R3, R4, R5); 
+	
+	endwhile;
+
+ 	//	ii. Change the STATUS field to 1 and PID field to currentPID in the Terminal StatusTable. 
+		[TERMINAL_STATUS_TABLE] 	= 1;
+		[TERMINAL_STATUS_TABLE + 1] = currentPID;
+
+ 	//	iii. Return using the return statement. 
+		return;
+
+endif;
+
+// 3. for the Release Terminal function (functionNum = 9) implement the following steps. 
+if(functionNum == 9) then
+
+	// i. currentPID and PID stored in the Terminal Status table should be same.  
+	// If these arenot same, then process is trying to release the terminal without acquiring it.  
+	// If thiscase occurs, store -1 as the return value in register R0 and return from the module.
+	if (currentPID != [TERMINAL_STATUS_TABLE + 1]) then
+		R0 = -1;
+		return;
+	endif;
+
+	// ii. Change the STATE field in the Terminal Status table to 0, indicating terminal isreleased. 
+	[TERMINAL_STATUS_TABLE] = 0;
+
+	// iii. Update the STATUS to READY for all processes (with valid PID) which have STATUS asWAIT_TERMINAL. 
+	multipush(R5);
+	alias count R5;
+	count = 0;
+	while (count < MAX_PROC_NUM) do
+		count = count + 1;
+		if ( ([PROCESS_TABLE + 16*count + 4] == WAIT_TERMINAL))  then
+			[PROCESS_TABLE + 16*count + 4] = READY;
+		endif;
+	endwhile;
+	multipop(R5);
+	
+	// iv. Save 0 in register R0 indicating success. 
+	R0 = 0;
+
+	// v. Return to the caller. 
+	return;
+
+endif;
