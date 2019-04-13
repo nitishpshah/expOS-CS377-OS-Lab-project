@@ -1,9 +1,6 @@
 alias functionNum R1;
 alias currentPID R2;
 
-// print "module 0";
-
-breakpoint;
 // 2. In Module 0, for the Acquire Terminal function (functionNum = 8) implement thefollowing steps. 
 if(functionNum == 8) then
 

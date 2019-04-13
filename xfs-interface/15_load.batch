@@ -3,6 +3,7 @@ load --idle ./../expl/expl_progs/idle.xsm
 load --init ./../expl/expl_progs/even.xsm
 load --int=timer ./../spl/spl_progs/15/15_timer_interrupt.xsm
 load --int=10 ./../spl/spl_progs/15/15_int10.xsm
+load --int=7 ./../spl/spl_progs/15/15_write_interrupt.xsm
 load --module 0 ./../spl/spl_progs/15/15_module_0.xsm
 load --module 4 ./../spl/spl_progs/15/15_device_manager_module_4.xsm
 load --module 5 ./../spl/spl_progs/15/15_scheduler.xsm

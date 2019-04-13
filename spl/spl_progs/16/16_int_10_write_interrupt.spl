@@ -1,0 +1,65 @@
+// Set the MODE FLAG field in the process table to the system call number which is 5 for write system call
+[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 9] = 5;
+
+// Store the value of user SP in a register as we need it for further computations.
+alias userSP R0;
+userSP = SP;
+
+// Save the value of SP in the user SP field of Process Table entry of the process.
+[PROCESS_TABLE + ( [SYSTEM_STATUS_TABLE + 1] * 16) + 13] = SP;
+
+// Set the value of SP to beginning of the kernel stack.
+SP = [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1] * 16) + 11] * 512 - 1; //stack pointer of 
+
+// access argument 1 which is file descriptor
+// calculate the physical address of the memory location where it is stored
+alias physicalPageNum R1;
+alias offset R2;
+alias fileDescPhysicalAddr R3;
+//  userSP - 4 is the location of the argument 1
+physicalPageNum = [PTBR + 2 * ((userSP - 4)/ 512)];
+offset = (userSP - 4) % 512;
+fileDescPhysicalAddr = (physicalPageNum * 512) + offset;
+alias fileDescriptor R4;
+fileDescriptor=[fileDescPhysicalAddr];
+
+if (fileDescriptor != -2)
+then
+	alias physicalAddrRetVal R5;
+	// compute physical address of staack pointer - 1 where the return value is to be stored
+	physicalAddrRetVal = ([PTBR + 2 * ((userSP - 1) / 512)] * 512) + ((userSP - 1) % 512);
+	[physicalAddrRetVal] = -1;
+else
+	alias word R5;
+	// get the word to be printed
+	word = [[PTBR + 2 * ((userSP - 3) / 512)] * 512 + ((userSP - 3) % 512)];
+
+	// 1. Push all registers used till now in this interrupt routine using multipush statement inSPL. 
+	multipush(R0, R1, R2, R3, R4, R5); 
+	
+	// 2. Store the function number of Terminal Write in register R1, PID of the current processin register R2 and word to be printed to the terminal in register R3.
+	// number of function Terminal Write present in device manager module (Module 4)
+	R1 = 3;
+
+	// 3. Call module 4 using callstatement.
+	call MOD_4;
+	
+	// 4. Ignore the value present in R0 as Terminal Write does not have any return value.
+	
+	// 5. Use multipop statement to restore the registers pushed. Specify the same order ofregisters used in multipush as registers are popped in the reverse order in whichthey are specified in the multipop statement
+	multipop(R0, R1, R2, R3, R4, R5); 
+
+	// set return value as zero
+	alias physicalAddrRetVal R6;
+	physicalAddrRetVal = ([PTBR + 2 * (userSP - 1)/ 512] * 512) + ((userSP - 1) % 512);
+	[physicalAddrRetVal] = 0;
+
+endif;
+
+SP = userSP;
+
+// Reset the MODE FLAG field in the process table to 0. Value 0 indicates that process is running in user mode.
+[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 9] = 0;
+
+ireturn;
+
