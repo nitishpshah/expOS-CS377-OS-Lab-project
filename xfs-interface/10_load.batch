@@ -1,0 +1,4 @@
+load --int=timer ./../spl/spl_progs/9_timer_interrupt.xsm
+load --init ./../spl/spl_progs/10_init.xsm
+load --int=7 ./../spl/spl_progs/10_write_interrupt.xsm
+load --os ./../spl/spl_progs/10_os_startup.xsm

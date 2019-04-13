@@ -1,0 +1,2 @@
+load --init ./../expl/expl_progs/11_2.xsm
+load --os ./../spl/spl_progs/10_os_startup.xsm

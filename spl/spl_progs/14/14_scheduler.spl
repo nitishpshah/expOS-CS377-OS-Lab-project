@@ -1,0 +1,80 @@
+// scheduler
+
+// 1. Obtain the PID of the current process from the System Status Table .
+alias currentPID R0;
+currentPID = [SYSTEM_STATUS_TABLE+1];
+
+// 2. Push the BP of the current process on top of the kernel stack. (See the box below) 
+// multipush (BP);
+
+// 3. Obtain the Process Table entry corresponding to the current PID.
+alias process_table_entry R1;
+process_table_entry = PROCESS_TABLE + currentPID * 16;
+
+// 4. Save SP % 512 in the kernel stack pointer field, also PTBR and PTLR into the corresponding fields in the Process Table entry.
+[process_table_entry + 12] = SP % 512;
+[process_table_entry + 14] = PTBR;
+[process_table_entry + 15] = PTLR;
+
+// 5. Iterate through the Process Table entries, starting from the succeeding entry of the current 
+// 	  process to find a process in READY or CREATED state.
+
+alias newPID R2;
+newPID = 0; 		// 6_1. if no process found, PID = zero = IDLE process
+
+alias process_i R3;
+alias count R5;
+count = 0;
+process_i = currentPID;
+while (1==1) do
+	count = count + 1;
+	process_i = (process_i + 1) % MAX_PROC_NUM;
+	if ( ([PROCESS_TABLE + 16*process_i + 4] != TERMINATED))  then
+		newPID = process_i;
+		break;
+	endif;
+	if (count > MAX_PROC_NUM) then
+		break;
+	endif;
+endwhile;
+
+alias new_process_table R3;
+new_process_table = PROCESS_TABLE + newPID*16;
+
+// 7. Obtain User Area Page number and kernel stack pointer value from Process Table entry
+//    of the new process and set SP as (User Area Page number) * 512 + (Kernel Stack pointer value).
+SP =  [new_process_table + 11] * 512 + [new_process_table + 12] ;	// kernel stack pointer
+
+// 8. Restore PTBR and PTLR from the corresponding fields in the Process Table entry of the new process.
+PTBR = [new_process_table + 14];
+PTLR = [new_process_table + 15];
+
+// 9. Set the PID of the new process in the current PID field of the System Status Table.
+[SYSTEM_STATUS_TABLE + 1] = newPID;
+
+// 10. If the new process is in CREATED state, then do the following steps.
+
+if ([new_process_table + 4] == CREATED) then
+	// Set SP to the value in the UPTR field of the process table entry.
+	SP = [new_process_table + 13];
+	// Set state of the newly scheduled process as RUNNING.
+	[new_process_table + 4] = RUNNING;
+	// Store 0 in the MODE FLAG field in the process table of the process.
+	[new_process_table + 9] = 0;
+	// Switch to the user mode using the ireturn statement, directly start execution
+	ireturn;
+else
+	// Set the state of the new process as RUNNING.
+	[new_process_table + 4] = RUNNING;
+	// Restore the BP of the new process from the top of it's kernel stack.
+	// multipop (BP);
+	// Return using return statement
+	return;
+	
+	// restore;
+	// SP = [new_process_table + 13];
+	// SP = [PROCESS_TABLE + ( [SYSTEM_STATUS_TABLE + 1] * 16) + 13];
+	// ireturn;
+
+endif;
+

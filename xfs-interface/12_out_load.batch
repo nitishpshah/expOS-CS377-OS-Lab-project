@@ -1,0 +1,4 @@
+load --idle ./../expl/expl_progs/12_idle_print_101_to_200.xsm
+load --init ./../expl/expl_progs/12_print_1_to_100.xsm
+load --int=timer ./../outside/sample_timer.xsm
+load --os ./../outside/os_startup.xsm

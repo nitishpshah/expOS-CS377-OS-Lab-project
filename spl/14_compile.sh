@@ -1,0 +1,11 @@
+./spl ./spl_progs/14_boot_module.spl
+./spl ./spl_progs/14_int10.spl
+./spl ./spl_progs/14_os_startup.spl
+./spl ./spl_progs/14_scheduler.spl
+./spl ./spl_progs/14_timer_interrupt.spl
+cd ./../expl
+./expl ./expl_progs/even.expl
+./expl ./expl_progs/odd.expl
+./expl ./expl_progs/primes.expl
+./expl ./expl_progs/idle.expl
+cd ./../spl

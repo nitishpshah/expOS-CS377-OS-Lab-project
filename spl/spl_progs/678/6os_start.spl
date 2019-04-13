@@ -1,0 +1,33 @@
+// load into memory from hd
+loadi(65, 7);
+loadi(66, 8);
+
+// Load the INT10 module
+loadi(22, 35);
+loadi(23, 36);
+
+// Load the exception handler routine
+loadi(2,  15);
+loadi(3,  16);
+
+// page table base addresses
+PTBR = PAGE_TABLE_BASE;
+PTLR = 8;
+
+// set up page table entries
+// virtual 4, code
+[PTBR+6] = 65;
+[PTBR+7] = "0100";
+// virtual 5, code
+[PTBR+8] = 66;
+[PTBR+9] = "0100";
+// virtual 8, stack
+[PTBR+14] = 76;
+[PTBR+15] = "0110";
+
+// update stack pointer to point to zero of the init program
+[76*512] = 512*3;
+SP = 7*512;	// virtual page 8, physical page 76
+
+// return control to user program in memory
+ireturn;

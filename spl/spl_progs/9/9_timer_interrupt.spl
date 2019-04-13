@@ -1,0 +1,26 @@
+// [SYSTEM_STATUS_TABLE + 1] = PID of the process
+// [SYSTEM_STATUS_TABLE + 1]*16 == memory offset in process table entry (each process has 16 entries)
+// PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1] * 16) == address of process table entry
+// Save the current value of User SP into the corresponding Process Table entry (13th word) 
+[PROCESS_TABLE + ( [SYSTEM_STATUS_TABLE + 1] * 16) + 13] = SP;
+
+// Set the SP to beginning of the kernel stack:
+// User Area Page number is the 11th word of the Process Table.
+// The initial value of SP must be set to this address*512 - 1.
+// [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1] * 16) + 11] == physical page number of user area
+SP = [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1] * 16) + 11] * 512 - 1; //stack pointer of 
+
+// Save the user context to the kernel stack using the Backup instruction 
+// register values are added to the stack (except SP, IP, exception flag registers and ports)
+backup;
+
+R0 = [SYSTEM_STATUS_TABLE + 1];
+print "PID: ";
+print R0;
+
+restore;	// register values
+
+// user stack
+SP = [PROCESS_TABLE + ( [SYSTEM_STATUS_TABLE + 1] * 16) + 13];
+
+ireturn;
