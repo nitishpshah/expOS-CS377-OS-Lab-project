@@ -10,7 +10,7 @@ if( functionNum == 3) then
 	multipush(R0, R1, R2, R3, R4, R5); 
 	// backup;
 
-	// 4. Store the function number 8 in register R1 and PID of the current process from the System Status table inregister R2 (Can use currentPID, as it already contain current PID value).
+	// 4. Store the function number 8 in register R1 and PID of the current process from the System Status table inregister R2 (Can use currentPID, as it already containing the current PID value).
 	functionNum = 8;
 	currentPID = [SYSTEM_STATUS_TABLE+1];
 
@@ -45,6 +45,54 @@ if( functionNum == 3) then
 	multipop(R0, R1, R2, R3, R4, R5); 
 
 	// 14. Return using the return statement.
+	return;
+
+endif;
+
+
+
+// If function number in R1 corresponds to Terminal Read, then implement below steps.
+// Calling Acquire Terminal function :-
+if( functionNum == 4) then
+
+	// Push all the registers used till now using multipush.
+	multipush(R0,R1,R2,R3,R4,R5);	
+
+	// Initialize registers R1, R2 with function number of Acquire Terminal and PID of current process respectively.
+	R1 = 8;
+	R2 = [SYSTEM_STATUS_TABLE + 1];
+	
+	// Call resource manager module.
+	call RESOURCE_MANAGER;
+
+	// Restore the registers using the multipop statement.
+	multipop(R0,R1,R2,R3,R4,R5);	
+
+	// Use read statement, for requesting to read from the terminal.
+	read;
+	
+	// Change the state of the current process to WAIT_TERMINAL.
+	[PROCESS_TABLE + currentPID * 16 + 4] = WAIT_TERMINAL;
+	
+	// Invoking the Context Switch Module :-
+	call CONTEXT_SWITCH;
+
+	// Push all the registers used till now.
+	multipush(R0,R1,R2,R3,R4,R5);	
+
+	// Invoke the scheduler.
+	call SCHEDULER;
+
+	// Following steps are executed after return from the scheduler
+	// Restore the registers using the multipop statement.
+	multipop(R0,R1,R2,R3,R4,R5);	
+
+	// The logical address of the word where the data has to be stored is in R3. 
+	// Convert this logical address to physical address.
+	// Store the value present in input buffer field of process table to the obtained physical address of the word.
+	[PTBR + 2*(R3/512) + R3%512] =  [PROCESS_TABLE + currentPID * 16 + 8];
+
+	// Return to the caller.
 	return;
 
 endif;

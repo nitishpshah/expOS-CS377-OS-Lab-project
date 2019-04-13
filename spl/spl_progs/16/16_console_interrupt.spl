@@ -1,0 +1,46 @@
+// The console interrupt handler is entered while some other process is executing in the user mode. 
+// The handler must switch to the kernel stack of that process, do the interrupt handling, 
+// restore the user stack of the process that was running and return control back to the process */
+
+// Store the SP value in the UPTR field in the process table entry of the currently running process.
+[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1]*16 + 13] = SP;
+
+// Initialize SP (kernel stack pointer) to (user area page number)*512 -1. //Switch to the kernel stack.
+SP = [PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1]*16 + 11] * 512 - 1;
+
+// Backup the user context of the currently running process in the kernel stack as done in timer interrupt routine.
+backup;
+
+// Get the PID of the process that has aqcuired the terminal from the terminal status table, Save this as reqPID.
+alias reqPID R2;
+reqPID = [TERMINAL_STATUS_TABLE + 1];
+
+// Using the reqPID obtained in the above step, get the corresponding process table entry.
+// The input entered in the console is saved in port P0 by the XSM machine. 
+// Copy the value present in P0 into the input buffer field of the process table entry obtained in the above step.
+[PROCESS_TABLE + reqPID*16 + 8] = P0;
+
+// next release the terminal
+
+// Push the registers used in this interrupt.
+multipush(R1, R2);
+
+// Initialize register R1 with function number for release terminal, 
+// R2 with reqPID (The current process did not acquire the terminal. 
+// The process with reqPID as PID is holding the terminal.)
+R2 = reqPID;
+R1 = 9;
+
+// Call resource manager module.
+call RESOURCE_MANAGER;
+
+// Ignore the return value and restore the registers pushed before.
+multipop(R1, R2);
+
+// Restore the user context from the kernel stack as done in the timer interrupt routine.
+restore;
+
+// Change SP to UPTR field from the process table entry of the currently running process and return to the user mode. //Switch back to user stack
+SP = [PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 13];
+
+ireturn;

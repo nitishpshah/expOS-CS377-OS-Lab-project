@@ -57,10 +57,13 @@ PTLR = [new_process_table + 15];
 if ([new_process_table + 4] == CREATED) then
 	// Set SP to the value in the UPTR field of the process table entry.
 	SP = [new_process_table + 13];
+
 	// Set state of the newly scheduled process as RUNNING.
 	[new_process_table + 4] = RUNNING;
+
 	// Store 0 in the MODE FLAG field in the process table of the process.
 	[new_process_table + 9] = 0;
+
 	// Switch to the user mode using the ireturn statement, directly start execution
 	ireturn;
 else
